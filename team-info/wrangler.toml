@@ -1,0 +1,13 @@
+name = "team-info"
+main = "src/index.js"
+compatibility_date = "2023-04-14"
+usage_model = "bundled"
+node_compat = true
+env = { }
+
+[triggers]
+crons = [ ]
+
+[vars]
+INSTALLATION_ID = "36439621"
+APP_ID = "318344"

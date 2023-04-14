@@ -1,0 +1,15 @@
+{
+  "name": "team-info",
+  "version": "0.0.0",
+  "devDependencies": {
+    "wrangler": "2.12.0"
+  },
+  "private": true,
+  "scripts": {
+    "start": "wrangler dev",
+    "deploy": "wrangler publish"
+  },
+  "dependencies": {
+    "octokit": "^2.0.14"
+  }
+}
