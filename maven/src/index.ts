@@ -14,7 +14,6 @@ export interface Env {
 	CLOUDFLARE_TOKEN: string;
 
 	ORIGIN: string;
-	PREFIX: string;
 	ALLOWED_REPOS: string;
 	AUTHORIZED_USERS: string;
 }
@@ -47,7 +46,7 @@ export default {
 		}
 
 		const url = new URL(request.url);
-		const path = url.pathname.substring(env.PREFIX.length);
+		const path = url.pathname.substring(1); // Remove leading slash
 		const repo_directory = "repository/";
 
 		if (!path.startsWith(repo_directory)) {
