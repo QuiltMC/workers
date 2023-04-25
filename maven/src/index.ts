@@ -71,12 +71,12 @@ export default {
 		const command = new PutObjectCommand({ Body: request.body, Bucket: env.B2_BUCKET, Key: path.replaceAll("+", " "), ContentType: await getContentType(request.url) });
 		await getS3(env).then(s3 => s3.send(command));
 
-		await env.MAVEN_QUEUE.send(path);
+		ctx.waitUntil(env.MAVEN_QUEUE.send(path));
 
 		return new Response("Upload successful.");
 	},
 
-	async queue(batch: MessageBatch<string>, env: Env): Promise<void> {
+	async queue(batch: MessageBatch<string>, env: Env, ctx: ExecutionContext): Promise<void> {
 		const messages = batch.messages;
 		const files: string[] = [];
 		const directories = new Set<string>;
@@ -88,11 +88,10 @@ export default {
 			directories.add(directory);
 		}
 
-		await purge(files, env);
+		ctx.waitUntil(purge(files, env, ctx));
 
 		for (const directory of directories) {
-			await index(directory, env);
-			await indexParentIfNeeded(directory, env);
+			ctx.waitUntil(indexRecursively(directory, env, ctx));
 		}
 	}
 };
@@ -101,19 +100,20 @@ async function getS3(env: Env): Promise<S3Client> {
 	return new S3Client({ endpoint: env.B2_ENDPOINT, region: env.B2_REGION, credentials: { accessKeyId: env.B2_KEY, secretAccessKey: env.B2_SECRET } });
 }
 
-async function indexParentIfNeeded(directory: string, env: Env) {
+async function indexRecursively(directory: string, env: Env, ctx: ExecutionContext) {
+	ctx.waitUntil(index(directory, env, ctx));
+
 	if (await env.MAVEN_KV.get(directory) === null) {
 		const name = directory.slice(0, directory.lastIndexOf("/"));
 		if (name.includes("/")) {
 			const parent = name.slice(0, name.lastIndexOf("/") + 1);
-			await index(parent, env);
-			await indexParentIfNeeded(parent, env);
+			ctx.waitUntil(indexRecursively(parent, env, ctx));
 		}
-		await env.MAVEN_KV.put(directory, "1");
+		ctx.waitUntil(env.MAVEN_KV.put(directory, "1"));
 	}
 }
 
-async function index(path: string, env: Env) {
+async function index(path: string, env: Env, ctx: ExecutionContext) {
 	const s3 = await getS3(env);
 	const links = ["<a href='../'>../</a>"];
 
@@ -136,9 +136,9 @@ async function index(path: string, env: Env) {
 
 	const body = head + `<h1>${path}</h1>` + links.join("") + tail;
 	const put = new PutObjectCommand({ Body: body, Bucket: env.B2_BUCKET, Key: path.replaceAll("+", " "), ContentType: "text/html" });
-	await s3.send(put);
+	ctx.waitUntil(s3.send(put));
 
-	await purge([env.ORIGIN + path], env);
+	ctx.waitUntil(purge([env.ORIGIN + path], env, ctx));
 }
 
 async function authorize(request: Request, repository: string, env: Env): Promise<boolean> {
@@ -180,7 +180,7 @@ async function getContentType(url: string): Promise<string> {
 	}
 }
 
-async function purge(paths: string[], env: Env) {
+async function purge(paths: string[], env: Env, ctx: ExecutionContext) {
 	const FILES_PER_REQUEST = 30;
 	const requests = paths.length / FILES_PER_REQUEST + 1;
 
@@ -191,6 +191,6 @@ async function purge(paths: string[], env: Env) {
 			body: `{"files":${JSON.stringify(paths.slice(i * FILES_PER_REQUEST, (i + 1) * FILES_PER_REQUEST))}}`
 		};
 
-		await fetch(`https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE}/purge_cache`, options);
+		ctx.waitUntil(fetch(`https://api.cloudflare.com/client/v4/zones/${env.CLOUDFLARE_ZONE}/purge_cache`, options));
 	}
 }
