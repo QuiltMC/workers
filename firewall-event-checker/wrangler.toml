@@ -1,0 +1,11 @@
+name = "firewall-event-checker"
+main = "src/index.js"
+compatibility_date = "2023-04-26"
+usage_model = "bundled"
+env = { }
+
+[triggers]
+crons = [ "0 */1 * * *" ]
+
+[vars]
+ZONE_TAG = "73c99d057aa12563eb4cad4ef14f0796"
