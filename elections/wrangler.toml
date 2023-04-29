@@ -3,6 +3,7 @@ main = "src/index.ts"
 compatibility_date = "2023-04-29"
 
 route = { pattern = "elections.quiltmc.org", custom_domain = true }
+vars = { CLIENT_ID = "e2c9eb66ea433f22aaea" }
 
 kv_namespaces = [
     { binding = "ELECTION_META", id = "fdbe3a373f3b4a92b9e5349f80fdb609", preview_id = "fdbe3a373f3b4a92b9e5349f80fdb609" }
