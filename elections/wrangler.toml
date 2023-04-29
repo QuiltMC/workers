@@ -1,0 +1,22 @@
+name = "elections"
+main = "src/index.ts"
+compatibility_date = "2023-04-29"
+
+route = { pattern = "elections.quiltmc.org", custom_domain = true }
+
+kv_namespaces = [
+    { binding = "ELECTION_META", id = "fdbe3a373f3b4a92b9e5349f80fdb609", preview_id = "fdbe3a373f3b4a92b9e5349f80fdb609" }
+]
+
+rules = [
+    { type = "Text", globs = ["public/*.html"], fallthrough = true }
+]
+
+[durable_objects]
+bindings = [
+    { name = "ELECTIONS", class_name = "ElectionDO" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ElectionDO"]

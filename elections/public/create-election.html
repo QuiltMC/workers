@@ -1,0 +1,52 @@
+<head>
+    <title>Create Election</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body class="section">
+    <h1 class="title">Create a new election</h1>
+
+    {{ ^loggedIn }}
+    <p class="mb-1">To access create a new election, please log in with GitHub</p>
+    <button class="button" onclick="document.location='{{{ loginUrl }}}'">Login with GitHub</button>
+    {{ /loggedIn }}
+
+    {{ #loggedIn }}
+    {{ ^admin }}
+    <p>You are not an admin</p>
+    {{ /admin }}
+
+    {{ #admin }}
+    <form method="POST">
+        <div class="field">
+            <label class="label" for="name">Name</label>
+            <div class="control">
+                <input class="input" type="text" id="name" name="name" placeholder="Election name" required>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label" for="description">Description</label>
+            <div class="control">
+                <input class="input" type="text" id="description" name="description" placeholder="Election description" required>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label" for="closeTime">Close time</label>
+            <div class="control">
+                <input class="input" type="datetime-local" id="closeTime" name="closeTime" required>
+            </div>
+        </div>
+
+        <div class="field">
+            <label class="label" for="urls">Urls</label>
+            <div class="control">
+                <textarea class="textarea" id="urls" name="urls" placeholder="Comma separated list of urls" required></textarea>
+            </div>
+        </div>
+
+        <button class="button" type="submit">Create</button>
+    </form>
+    {{ /admin }}
+    {{ /loggedIn }}
+</body>

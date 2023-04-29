@@ -1,0 +1,24 @@
+<head>
+    <title>Election</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+</head>
+<body class="section">
+    <h1 class="title">Election {{ name }}</h1>
+    <p class="subtitle">{{ description }}</p>
+
+    {{ #voteInProgress }}
+    {{ #voteLink }}
+    <p class="mb-1">Your vote link is ready</p>
+    <button class="button" onclick="document.location='{{{ voteLink }}}'">Vote</button>
+    {{ /voteLink }}
+
+    {{ ^voteLink }}
+    <p class="mb-1">To access the voting page, please log in with GitHub</p>
+    <button class="button" onclick="document.location='{{{ loginUrl }}}'">Login with GitHub</button>
+    {{ /voteLink }}
+    {{ /voteInProgress }}
+
+    {{ ^voteInProgress }}
+    <p>The voting period is over</p>
+    {{ /voteInProgress }}
+</body>
