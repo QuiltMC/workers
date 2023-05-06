@@ -1,8 +1,8 @@
 import { S3Client, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
 
 export interface Env {
-	UPLOAD_QUEUE: Queue;
-	INDEX_QUEUE: Queue;
+	UPLOAD_QUEUE: Queue<string>;
+	INDEX_QUEUE: Queue<string>;
 	INDEX_KV: KVNamespace;
 
 	B2_ENDPOINT: string;
@@ -85,6 +85,8 @@ export default {
 			case "maven-to-index":
 				ctx.waitUntil(queue_index(batch, env, ctx));
 				break;
+			default:
+				console.log(`Unknown queue: ${batch.queue}`);
 		}
 	}
 };
