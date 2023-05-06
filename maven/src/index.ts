@@ -100,8 +100,8 @@ async function queue_upload(batch: MessageBatch<string>, env: Env, ctx: Executio
 		files.push(path);
 		const directory = path.slice(0, path.lastIndexOf("/") + 1);
 
-		if (!directory.includes(directory)) {
-			env.INDEX_QUEUE.send(directory);
+		if (!directories.has(directory)) {
+			ctx.waitUntil(env.INDEX_QUEUE.send(directory));
 			directories.add(directory);
 		}
 	}
