@@ -1,8 +1,9 @@
 import { S3Client, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
 
 export interface Env {
-	MAVEN_KV: KVNamespace;
-	MAVEN_QUEUE: Queue;
+	UPLOAD_QUEUE: Queue;
+	INDEX_QUEUE: Queue;
+	INDEX_KV: KVNamespace;
 
 	B2_ENDPOINT: string;
 	B2_REGION: string;
@@ -71,30 +72,46 @@ export default {
 		const command = new PutObjectCommand({ Body: request.body, Bucket: env.B2_BUCKET, Key: path.replaceAll("+", " "), ContentType: await getContentType(request.url) });
 		await getS3(env).then(s3 => s3.send(command));
 
-		ctx.waitUntil(env.MAVEN_QUEUE.send(path));
+		ctx.waitUntil(env.UPLOAD_QUEUE.send(path));
 
 		return new Response("Upload successful.");
 	},
 
-	async queue(batch: MessageBatch<string>, env: Env, ctx: ExecutionContext): Promise<void> {
-		const messages = batch.messages;
-		const files: string[] = [];
-		const directories = new Set<string>;
-
-		for (const message of messages) {
-			const path = message.body;
-			files.push(path);
-			const directory = path.slice(0, path.lastIndexOf("/") + 1);
-			directories.add(directory);
-		}
-
-		ctx.waitUntil(purge(files, env, ctx));
-
-		for (const directory of directories) {
-			ctx.waitUntil(indexRecursively(directory, env, ctx));
+	async queue(batch: MessageBatch<string>, env: Env, ctx: ExecutionContext) {
+		switch(batch.queue) {
+			case "maven-uploads":
+				ctx.waitUntil(queue_upload(batch, env, ctx));
+				break;
+			case "maven-to-index":
+				ctx.waitUntil(queue_index(batch, env, ctx));
+				break;
 		}
 	}
 };
+
+async function queue_upload(batch: MessageBatch<string>, env: Env, ctx: ExecutionContext) {
+	const files: string[] = [];
+	const directories = new Set<string>;
+
+	for (const message of batch.messages) {
+		const path = message.body;
+		files.push(path);
+		const directory = path.slice(0, path.lastIndexOf("/") + 1);
+
+		if (!directory.includes(directory)) {
+			env.INDEX_QUEUE.send(directory);
+			directories.add(directory);
+		}
+	}
+
+	ctx.waitUntil(purge(files, env, ctx));
+}
+
+async function queue_index(batch: MessageBatch<string>, env: Env, ctx: ExecutionContext) {
+	for (const message of batch.messages) {
+		ctx.waitUntil(indexRecursively(message.body, env, ctx));
+	}
+}
 
 async function getS3(env: Env): Promise<S3Client> {
 	return new S3Client({ endpoint: env.B2_ENDPOINT, region: env.B2_REGION, credentials: { accessKeyId: env.B2_KEY, secretAccessKey: env.B2_SECRET } });
@@ -103,13 +120,13 @@ async function getS3(env: Env): Promise<S3Client> {
 async function indexRecursively(directory: string, env: Env, ctx: ExecutionContext) {
 	ctx.waitUntil(index(directory, env, ctx));
 
-	if (await env.MAVEN_KV.get(directory) === null) {
+	if (await env.INDEX_KV.get(directory) === null) {
 		const name = directory.slice(0, directory.lastIndexOf("/"));
 		if (name.includes("/")) {
 			const parent = name.slice(0, name.lastIndexOf("/") + 1);
 			ctx.waitUntil(indexRecursively(parent, env, ctx));
 		}
-		ctx.waitUntil(env.MAVEN_KV.put(directory, "1"));
+		ctx.waitUntil(env.INDEX_KV.put(directory, "1"));
 	}
 }
 
