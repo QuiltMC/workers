@@ -146,21 +146,31 @@ async function index(path: string, env: Env, ctx: ExecutionContext) {
 	if (response.CommonPrefixes !== undefined) {
 		for (const dir of response.CommonPrefixes) {
 			const name = dir.Prefix?.substring(path.length).replaceAll(" ", "+");
-			dirs.push(name);
+
+			if (name){
+				dirs.push(name.slice(0, name.lastIndexOf("/"))); // Remove trailing slash for flexver comparison purposes
+			}
 		}
 	}
 
 	if (response.Contents !== undefined) {
 		for (const file of response.Contents) {
 			const name = file.Key?.substring(path.length).replaceAll(" ", "+");
-			files.push(name);
+
+			if (name){
+				files.push(name);
+			}
 		}
 	}
 
 	dirs.sort(flexVerCompare);
 	files.sort(flexVerCompare);
 
-	for (const name of dirs.concat(files)) {
+	for (const name of dirs) {
+		links.push(`<p><a href="${name}/">${name}/</a></p>`);
+	}
+
+	for (const name of files) {
 		links.push(`<p><a href="${name}">${name}</a></p>`);
 	}
 
@@ -212,7 +222,7 @@ async function getContentType(url: string): Promise<string> {
 
 async function purge(paths: string[], env: Env, ctx: ExecutionContext) {
 	const FILES_PER_REQUEST = 30;
-	const requests = paths.length / FILES_PER_REQUEST + 1;
+	const requests = paths.length / FILES_PER_REQUEST;
 
 	for (let i = 0; i < requests; i++) {
 		const options = {
