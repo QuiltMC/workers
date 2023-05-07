@@ -4,6 +4,9 @@ dependencies:
   '@aws-sdk/client-s3':
     specifier: ^3.328.0
     version: 3.328.0
+  flexver:
+    specifier: ^1.1.0
+    version: 1.1.0
 
 devDependencies:
   '@cloudflare/workers-types':
@@ -1532,6 +1535,10 @@ packages:
     dependencies:
       to-regex-range: 5.0.1
     dev: true
+
+  /flexver@1.1.0:
+    resolution: {integrity: sha512-73nFzNWEucJiuHLh9UWKknXs3prgfwxlhfcjajXB7byiYHyB7inMz7jFKVl5XKKWYWXPZIlzu1xKSTfPzQ6HSg==}
+    dev: false
 
   /fsevents@2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}

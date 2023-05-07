@@ -1,4 +1,6 @@
 import { S3Client, PutObjectCommand, ListObjectsCommand } from "@aws-sdk/client-s3";
+// @ts-ignore
+import flexVerCompare from "flexver/dist/module";
 
 export interface Env {
 	UPLOAD_QUEUE: Queue<string>;
@@ -51,7 +53,7 @@ export default {
 		const repo_directory = "repository/";
 
 		if (!path.startsWith(repo_directory)) {
-			return new Response("Trying to push outside of repository.", { status: 401 })
+			return new Response("Trying to push outside of repository.", { status: 401 });
 		}
 
 		const repository = path.substring(repo_directory.length, path.indexOf("/", repo_directory.length));
@@ -135,6 +137,8 @@ async function indexRecursively(directory: string, env: Env, ctx: ExecutionConte
 async function index(path: string, env: Env, ctx: ExecutionContext) {
 	const s3 = await getS3(env);
 	const links = ["<a href='../'>../</a>"];
+	const dirs = [];
+	const files = [];
 
 	const command = new ListObjectsCommand({ Bucket: env.B2_BUCKET, Prefix: path.replaceAll("+", " "), Delimiter: "/" });
 	const response = await s3.send(command);
@@ -142,15 +146,22 @@ async function index(path: string, env: Env, ctx: ExecutionContext) {
 	if (response.CommonPrefixes !== undefined) {
 		for (const dir of response.CommonPrefixes) {
 			const name = dir.Prefix?.substring(path.length).replaceAll(" ", "+");
-			links.push(`<p><a href="${name}">${name}</a></p>`);
+			dirs.push(name);
 		}
 	}
 
 	if (response.Contents !== undefined) {
 		for (const file of response.Contents) {
 			const name = file.Key?.substring(path.length).replaceAll(" ", "+");
-			links.push(`<p><a href="${name}">${name}</a></p>`);
+			files.push(name);
 		}
+	}
+
+	dirs.sort(flexVerCompare);
+	files.sort(flexVerCompare);
+
+	for (const name of dirs.concat(files)) {
+		links.push(`<p><a href="${name}">${name}</a></p>`);
 	}
 
 	const body = head + `<h1>${path}</h1>` + links.join("") + tail;
