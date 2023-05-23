@@ -28,8 +28,8 @@ max_batch_timeout = 30
 
 [[queues.consumers]]
 queue = "maven-to-index"
-max_batch_size = 5
-max_batch_timeout = 5
+max_batch_size = 1
+max_batch_timeout = 1
 
 [vars]
 ALLOWED_REPOS = "[\"snapshot\",\"release\"]"
