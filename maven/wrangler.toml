@@ -1,0 +1,41 @@
+name = "maven"
+main = "src/index.ts"
+compatibility_date = "2023-04-22"
+usage_model = "bundled"
+workers_dev = false
+
+[route]
+pattern = "maven.quiltmc.org/*"
+zone_id = "73c99d057aa12563eb4cad4ef14f0796"
+
+[[kv_namespaces]]
+binding = "INDEX_KV"
+id = "130b4e2d0b1c43ae832f4139f105cd05"
+preview_id = "130b4e2d0b1c43ae832f4139f105cd05"
+
+[[queues.producers]]
+queue = "maven-uploads"
+binding = "UPLOAD_QUEUE"
+
+[[queues.producers]]
+queue = "maven-to-index"
+binding = "INDEX_QUEUE"
+
+[[queues.consumers]]
+queue = "maven-uploads"
+max_batch_size = 100
+max_batch_timeout = 30
+
+[[queues.consumers]]
+queue = "maven-to-index"
+max_batch_size = 1
+max_batch_timeout = 1
+
+[vars]
+ALLOWED_REPOS = "[\"snapshot\",\"release\"]"
+B2_ENDPOINT = "https://s3.eu-central-003.backblazeb2.com"
+B2_REGION = "eu-central-003"
+B2_BUCKET = "maven-quiltmc-org"
+B2_KEY = "003fac8dd2ef1560000000004"
+CLOUDFLARE_ZONE = "73c99d057aa12563eb4cad4ef14f0796"
+ORIGIN = "https://maven.quiltmc.org/"
